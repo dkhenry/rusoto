@@ -25,6 +25,7 @@ pub enum Region {
     UsWest1,
     UsWest2,
     CnNorth1,
+    UsGovWest1,
 }
 
 /// An error produced when attempting to convert a `str` into a `Region` fails.
@@ -49,6 +50,7 @@ impl Display for Region {
             Region::UsWest1 => "us-west-1",
             Region::UsWest2 => "us-west-2",
             Region::CnNorth1 => "cn-north-1",
+            Region::UsGovWest1 => "us-gov-west-1"
         };
 
         write!(f, "{}", region_str)
@@ -73,6 +75,7 @@ impl FromStr for Region {
             "us-west-1" => Ok(Region::UsWest1),
             "us-west-2" => Ok(Region::UsWest2),
             "cn-north-1" => Ok(Region::CnNorth1),
+            "us-gov-west-1" => Ok(Region::UsGovWest1),
             s => Err(ParseRegionError::new(s))
         }
     }
