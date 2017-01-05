@@ -10652,7 +10652,7 @@ impl<P, D> S3Client<P, D> where P: ProvideAwsCredentials, D: DispatchSignedReque
                 };
 
         match bucket {
-            Some(b) => format!("{}.{}", b,hostname),
+            Some(b) => format!("{}.{}", b,host),
             None => host,
         }
     }
