@@ -9892,9 +9892,8 @@ impl<P, D> S3Client<P, D> where P: ProvideAwsCredentials, D: DispatchSignedReque
         }
     }
     /// Creates a new bucket.
-    /// All requests go to the us-east-1/us-standard endpoint, but can create buckets anywhere.
     pub fn create_bucket(&self, input: &CreateBucketRequest) -> Result<CreateBucketOutput, S3Error> {
-        let region = Region::UsEast1;
+        let region = self.region;
         let mut create_config : Vec<u8>;
         let mut path = String::from("/");
         if !is_dns_compatible(&input.bucket) {
@@ -10693,27 +10692,20 @@ impl<P> S3Helper<P> where P: ProvideAwsCredentials {
         self.client.list_buckets()
     }
 
-    /// Creates bucket in default us-east-1/us-standard region.
+    /// Creates bucket in clients defaults region.
     pub fn create_bucket(&self, bucket_name: &str, canned_acl: Option<CannedAcl>) -> Result<CreateBucketOutput, S3Error> {
-        self.create_bucket_in_region(bucket_name, Region::UsEast1, canned_acl)
+        self.create_bucket_in_region(bucket_name, self.client.region , canned_acl)
     }
 
     /// Creates bucket in specified region.
     pub fn create_bucket_in_region(&self, bucket_name: &str, region: Region, canned_acl: Option<CannedAcl>) -> Result<CreateBucketOutput, S3Error> {
         let mut request = CreateBucketRequest::default();
 
-        match region {
-            Region::UsEast1 => {
-                // us-east-1 is us-standard, don't send a location constraint:
-                request.create_bucket_configuration = None;
-            }
-            _ => {
-                let create_config = CreateBucketConfiguration {
-                    location_constraint: region.to_string()
-                };
-                request.create_bucket_configuration = Some(create_config);
-            }
-        }
+        let create_config = CreateBucketConfiguration {
+            location_constraint: region.to_string()
+        };
+        request.create_bucket_configuration = Some(create_config);
+        
         request.bucket = bucket_name.to_string();
 
         request.acl = canned_acl;
@@ -11302,27 +11294,11 @@ mod tests {
     }
 
     #[test]
-    fn create_bucket_us_east_1_no_constraints() {
-        match create_bucket_config_xml(Region::UsEast1).len() {
-            0 => return,
-            _ => panic!("us-east-1 should not have bucket constraint."),
-        }
-    }
-
-    #[test]
     fn create_bucket_constraint_needed() {
         if !needs_create_bucket_config(Region::UsWest2) {
             panic!("us-west-2 should have bucket constraint.");
         }
     }
-
-    #[test]
-    fn create_bucket_no_constraint_needed() {
-        if needs_create_bucket_config(Region::UsEast1) {
-            panic!("us-east-1 should not have bucket constraint.");
-        }
-    }
-
 
     #[test]
     fn get_redirect_location_from_s3() {
